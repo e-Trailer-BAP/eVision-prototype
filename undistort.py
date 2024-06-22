@@ -22,11 +22,11 @@ def process_image(images, data_path, output_path, camera_models, prefix):
         cv2.waitKey(0)
         # cv2.imwrite(os.path.join(output_path, f'{prefix}-BEV.png'), birdview.getImage())
 
-def find_centroids(Undistorted, HRL=30, SRL=160, VRL=20, HRU=12, SRU=40, VRU=40):
+def find_centroids(camera_name, Undistorted, HRL=30, SRL=160, VRL=20, HRU=12, SRU=40, VRU=40):
     # Load the image
-        
+    detected = Undistorted.copy()
     # Convert the image to the HSV color space
-    hsv = cv2.cvtColor(Undistorted, cv2.COLOR_BGR2HSV)
+    hsv = cv2.cvtColor(detected, cv2.COLOR_BGR2HSV)
     H=150
     S=220
     V=220
@@ -48,7 +48,7 @@ def find_centroids(Undistorted, HRL=30, SRL=160, VRL=20, HRU=12, SRU=40, VRU=40)
         # Check if the polygon has at least 3 points
         if len(approx) >= 3:
             # Draw the contour in orange (for visualization purposes)
-            cv2.drawContours(Undistorted, [approx], -1, (0, 255, 0), 2)
+            cv2.drawContours(detected, [approx], -1, (0, 255, 0), 2)
             
             # Calculate the centroid of the polygon
             M = cv2.moments(approx)
@@ -58,14 +58,15 @@ def find_centroids(Undistorted, HRL=30, SRL=160, VRL=20, HRU=12, SRU=40, VRU=40)
                 centroids.append((cX, cY))
                 # print("Centroid:", cX, cY)
                 # Draw the centroid
-                cv2.circle(Undistorted, (cX, cY), 5, (0, 255, 0), -1)  # Green for centroids
+                cv2.circle(detected, (cX, cY), 5, (0, 255, 0), -1)  # Green for centroids
     
     # Display the image with the contours and centroids marked
     # cv2.imshow("Image with Contours and Centroids", Undistorted)
+    cv2.imwrite(os.path.join("data/calib_images", "detection", f"{camera_name}.png"), detected)
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
     
-    return centroids, Undistorted
+    return centroids, detected
 
 def order_centroids(centroids):
     # Sort centroids based on x-coordinate (ascending) to separate left and right
@@ -99,6 +100,25 @@ def project(image, camera_name, centroid):
         bl=[-120,50+offset]
         tl=[-70,190+offset]
         tr=[100,160+offset]
+    elif camera_name == "back":
+        offset=0
+        br=[70,121+offset]
+        bl=[-120,180+offset]
+        tl=[-50,259+offset]
+        tr=[100,309+offset]
+    elif camera_name == "left":
+        offset=23
+        br=[70,77+offset]
+        bl=[-100,137+offset]
+        tl=[-50,297+offset]
+        tr=[120,237+offset]
+    elif camera_name == "right":
+        offset=23
+        br=[100,77+offset]
+        bl=[-70,117+offset]
+        tl=[-50,267+offset]
+        tr=[120,227+offset]
+
     # print(centroid)
     pts1 = np.float32(centroid)
     pts2 = np.float32([[scale*(camx+br[0]), scale*(camy-br[1])],
@@ -110,25 +130,13 @@ def project(image, camera_name, centroid):
     # Apply perspective transform Method
     matrix = cv2.getPerspectiveTransform(pts1, pts2)
     result = cv2.warpPerspective(image, matrix, (width, height))
-
-    # print(matrix)
-
-    # # Show the result
-    # print('pre transform')
-
-    # cv2.imshow("pre",image)
-
-    # print('post transform')
-    # cv2.imshow("post",result)
-    cv2.imwrite("data/output/testssdfs.png", result)
-    # cv2.waitKey()
+    cv2.imwrite(os.path.join("data/calib_images", "projection", f"{camera_name}.png"), result)
     return matrix
 
 
 if __name__ == "__main__":
     mode = "image"
-    camera_names = ["front"]
-    # "back", "left", "right"]
+    camera_names = ["front", "back", "left", "right"]
     yamls = []
     calib_images = []
     camera_models = []
@@ -139,7 +147,7 @@ if __name__ == "__main__":
     output_path = "data/output"
     prefix = "t5"
     debug=True
-    scale_xy=(0.8, 0.8)
+    scale_xy=(1, 1)
     shift_xy=(0, 0)
 
     if debug:
@@ -160,24 +168,23 @@ if __name__ == "__main__":
         if img is None:
             raise RuntimeError(f"Could not open or find the image: {image_path}")
         undistorted = calib_model.undistort(img)
-        centroid, detected = find_centroids(undistorted)
+        cv2.imwrite(os.path.join("data/calib_images", "undistorted", f"{calib_model.camera_name}.png"), undistorted)
+        centroid, detected = find_centroids(calib_model.camera_name, undistorted)
 
         if len(centroid) == 4:
             centroid = order_centroids(centroid)
             # print(centroid)
+            projection_matrix = project(undistorted, calib_model.camera_name, centroid)
         else:
             print("Error: Unable to detect 4 centroids")
             print("Centroids detected:", len(centroid))
-        projection_matrix = project(img, calib_model.camera_name, centroid)
-        # cv2.imshow("Undistorted", undistorted)
-        # cv2.imshow("Detected", detected)
-        camera_model = FisheyeCameraModel(calib_model.camera_file, calib_model.camera_name, debug, scale_xy, shift_xy)
-        camera_model.undistorted = undistorted
-        print(projection_matrix)
-        camera_model.project_matrix = projection_matrix
-        camera_models.append(camera_model)
+    #     camera_model = FisheyeCameraModel(calib_model.camera_file, calib_model.camera_name, debug, scale_xy, shift_xy)
+    #     camera_model.undistorted = undistorted
+    #     print(projection_matrix)
+    #     camera_model.project_matrix = projection_matrix
+    #     camera_models.append(camera_model)
 
-    # selected_camera_model = camera_models[0]
+    # # selected_camera_model = camera_models[0]
 
-    process_image(images, data_path, output_path, camera_models, prefix)
+    # process_image(images, data_path, output_path, camera_models, prefix)
 
