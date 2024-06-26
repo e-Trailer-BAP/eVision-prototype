@@ -68,28 +68,36 @@ This module is responsible for undistorting fisheye camera images, detecting cen
 Key Functions: 
 - `process_image(images, data_path, output_path, camera_models, prefix)`: Processes a list of images by undistorting and projecting them. 
 - `find_centroids(camera_name, Undistorted, HRL=30, SRL=160, VRL=20, HRU=12, SRU=40, VRU=40)`: Finds centroids of detected features in an undistorted image. 
-- `order_centroids(centroids)`: Orders the detected centroids for perspective transformation. - `project(image, camera_name, centroid)`: Projects an undistorted image using the calculated centroids and perspective transformation matrix. 
+- `order_centroids(centroids)`: Orders the detected centroids for perspective transformation.
+- `project(image, camera_name, centroid)`: Projects an undistorted image using the calculated centroids and perspective transformation matrix.
+
 **Usage**: This script can be run independently to preprocess calibration images for the fisheye cameras. It detects the centroids, orders them, and applies the perspective transformation to generate the projected images and matrices. 
+
 **To Do**: Write the generated projection matrix to a YAML
 
 ### `projection.py` 
 This module handles the perspective transformation of an image based on predefined corner points and their corresponding real-world coordinates. 
+
 Key Steps: 
 1. Load an undistorted image. 
 2. Define the coordinates of four corners in the image. 
 3. Define the corresponding real-world coordinates. 
 4. Compute the perspective transformation matrix. 
-5.  Apply the perspective transformation to the image. 
+5.  Apply the perspective transformation to the image.
+
 **Usage**: This script can be used to walkthrough the process of creating a projection matrix step-by-step.
 
 ### `threadrecord.py` 
 This module is designed to handle the simultaneous recording of video streams from multiple cameras using threading. It captures video from four different streams and saves the recordings to disk. 
+
 Key Features: 
 - Initializes video capture objects for four streams.
 - Sets frame size and frame rate for each capture object. 
 - Creates `VideoWriter` objects for saving the recorded videos. - Uses threading to handle simultaneous recording from all four cameras. 
-- Records for a specified duration or until a stop event is triggered. 
-**Usage**: This script is used to record synchronized video streams from multiple cameras. 
+- Records for a specified duration or until a stop event is triggered.
+  
+**Usage**: This script is used to record synchronized video streams from multiple cameras.
+  
 **To-Do**: Timestamp videos for better synchronization
 
 ## Usage
