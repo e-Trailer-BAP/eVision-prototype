@@ -94,6 +94,7 @@ def project(image, camera_name, centroid):
     # Specify the width and the height of transformed image
     width, height = math.floor(scale*camx*2), math.floor(scale*camy)
 
+    ##REPLACE VALUES HERE WITH REAL WORLD COORDINATES
     if camera_name == "front":
         offset=110
         br=[50,40+offset]
