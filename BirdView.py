@@ -36,12 +36,12 @@ class BirdView:
 
     def stitch_all_parts(self):
         front, back, left, right = self.frames
-        # self.F(front[:self.yt, self.xl:self.xr])
+        self.F(front[:self.yt, self.xl:self.xr])
         self.B(back[:self.yt, self.xl:self.xr])
         self.L(left[self.yt:self.yb, :self.xl])
         self.R(right[self.yt:self.yb, :self.xl])
-        # self.FL(self.merge(front[:self.yt, :self.xl], left[:self.yt, :self.xl], 0))
-        # self.FR(self.merge(front[:self.yt, self.xr:], right[:self.yt, :self.xl], 1))
+        self.FL(self.merge(front[:self.yt, :self.xl], left[:self.yt, :self.xl], 0))
+        self.FR(self.merge(front[:self.yt, self.xr:], right[:self.yt, :self.xl], 1))
         self.FL( left[:self.yt, :self.xl])
         self.FR( right[:self.yt, :self.xl])
         self.BL(self.merge(back[:self.yt, :self.xl], left[self.yb:, :self.xl], 2))

@@ -43,8 +43,8 @@ class FisheyeCameraModel:
             self.camera_matrix = self.read_matrix_simple(config['camera_matrix'])
             self.dist_coeffs = self.read_matrix_simple(config['dist_coeffs'])
             self.resolution = self.read_matrix_simple(config['resolution']).reshape((1, 2))
-            # self.scale_xy = self.read_point2f_simple(config['scale_xy'])
-            # self.shift_xy = self.read_point2f_simple(config['shift_xy'])
+            self.scale_xy = self.read_point2f_simple(config['scale_xy'])
+            self.shift_xy = self.read_point2f_simple(config['shift_xy'])
             self.project_matrix = self.read_matrix_simple(config['project_matrix'])
             self.output_resolution = self.read_matrix_simple(config['output_resolution']).reshape((1, 2))[0]
             self.update_undistort_maps()
