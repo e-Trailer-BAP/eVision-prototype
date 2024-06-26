@@ -2,6 +2,7 @@ import cv2
 import os
 import yaml
 import numpy as np
+import argparse
 from FisheyeCameraModel import FisheyeCameraModel
 from BirdView import BirdView
 import Utilities as utils
@@ -76,7 +77,7 @@ def process_imgvid(paths, data_path, output_path, camera_models, prefix):
     cv2.imwrite(os.path.join(output_path, f'{prefix}-BEV.png'), birdview.getImage())
 
 def process_video(input_videos, data_path, output_path, camera_models, prefix):
-    frame_count = utils.find_minimum_frame_count(input_videos)-25
+    frame_count = utils.find_minimum_frame_count(input_videos)
     caps = [cv2.VideoCapture(video) for video in input_videos]
     if not all(cap.isOpened() for cap in caps):
         print("Error: One or more video files couldn't be opened.")
@@ -85,7 +86,6 @@ def process_video(input_videos, data_path, output_path, camera_models, prefix):
     width = utils.init_constants()["config"]["total_w"]
     height = utils.init_constants()["config"]["total_h"]
     fps = int(caps[0].get(cv2.CAP_PROP_FPS))
-    # frame_count = int(caps[0].get(cv2.CAP_PROP_FRAME_COUNT))
     print(frame_count)
 
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -100,12 +100,6 @@ def process_video(input_videos, data_path, output_path, camera_models, prefix):
     for i in range(frame_count):
         frames = []
         for cap in caps:
-            if i == 1 and cap == caps[0]:
-                first_left = False
-                print("first left")
-            if first_left and cap != caps[2]:
-                for j in range(24):
-                    cap.read()
             ret, frame = cap.read()
             if not ret:
                 print(f"Error: Couldn't read frame {i}.")
@@ -183,27 +177,28 @@ def process_stream(camera_model):
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    mode = "video"
-    for prefix in ["t1"]:
-    # "t2", "t3", "t4", "t5"]:
+    parser = argparse.ArgumentParser(description="Bird's eye view generation.")
+    parser.add_argument("--mode", type=str, default="image", choices=["video", "imgvid", "image", "stream"], help="Mode of operation: video, imgvid, image, stream")
+    args = parser.parse_args()
+
+    mode = args.mode
+    for prefix in ["t1"]: #ADD MORE PREFIXES HERE
         camera_names = ["front", "back", "left", "right"]
         yamls = []
         images = []
         videos = []
         data_path = "data"
         output_path = "data/output"
-        debug=True
+        debug = True
         if debug:
             print("Debug mode enabled")
             print(utils.init_constants()["config"])
 
         for name in camera_names:
             yamls.append(os.path.join(data_path, "yaml", f"{name}.yaml"))
-            if mode == "video":
+            if mode in ["video", "imgvid"]:
                 videos.append(os.path.join(data_path, "videos", f"{prefix}-{name}.mp4"))
-            if mode == "imgvid":
-                videos.append(os.path.join(data_path, "videos", f"{prefix}-{name}.mp4"))
-            else:
+            elif mode == "image":
                 images.append(os.path.join(data_path, "images", f"{name}-1.png"))
 
         camera_models = [FisheyeCameraModel(yaml_file, name, debug) for yaml_file, name in zip(yamls, camera_names)]
@@ -212,7 +207,7 @@ if __name__ == "__main__":
 
         if mode == "video":
             process_video(videos, data_path, output_path, camera_models, prefix)
-        if mode == "imgvid":
+        elif mode == "imgvid":
             process_imgvid(videos, data_path, output_path, camera_models, prefix)
         elif mode == "stream":
             process_stream(selected_camera_model)
