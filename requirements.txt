@@ -1,0 +1,3 @@
+opencv_python==4.8.1.78
+~==mpy
+~umpy==1.25.0
